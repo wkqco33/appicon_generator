@@ -1,0 +1,44 @@
+# Rust/Cargo 관련
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE 및 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 운영체제
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 프로젝트 특정
+test_*.png
+example_output/
+test_output/
+test_images/
+benchmark_output/
+dist/
+
+# 로그 파일
+*.log
+
+# 백업 파일
+*.bak
+*.backup
+*.tmp
+
+# 환경 설정
+.env
+.env.local
+.env.*.local
+
+# 문서 빌드
+book/

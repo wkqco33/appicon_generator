@@ -1,0 +1,21 @@
+[package]
+name = "appicon_generator"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "appicon_generator"
+path = "src/main.rs"
+
+[lib]
+name = "appicon_generator"
+path = "src/lib.rs"
+
+[dependencies]
+clap = "4.5.51"
+image = "0.25.8"
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_fs = "1.1"
+predicates = "3.0"
