@@ -13,5 +13,5 @@ pub mod config;
 // 편의를 위한 re-export
 pub use android::{AndroidIconSize, ANDROID_SIZES};
 pub use ios::{IOSIconSize, IOS_SIZES};
-pub use platform::{Platform, IconGenerationResult};
+pub use platform::{Platforms, IconGenerationResult};
 pub use config::Config;

@@ -11,6 +11,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli_handler = CliHandler::new();
     let config = cli_handler.parse_args();
 
+    match config.validate() {
+        Ok(_) => {
+            println!("✅ 경로 - {}", config.summary());
+        }
+        Err(e) => {
+            eprintln!("❌ 잘못된 구성입니다: {}", e);
+            std::process::exit(1);
+        }
+    }
+
     let input_path = Path::new(&config.input_path);
     let output_dir = Path::new(&config.output_dir);
 

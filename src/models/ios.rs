@@ -6,16 +6,6 @@ pub struct IOSIconSize {
     pub description: &'static str,
 }
 
-impl IOSIconSize {
-    pub fn new(name: &'static str, size: u32, description: &'static str) -> Self {
-        Self {
-            name,
-            size,
-            description,
-        }
-    }
-}
-
 /// iOS 플랫폼 아이콘 크기 정의
 pub const IOS_SIZES: &[IOSIconSize] = &[
     IOSIconSize {
@@ -101,7 +91,11 @@ mod tests {
 
     #[test]
     fn test_ios_icon_size_creation() {
-        let icon = IOSIconSize::new("test_icon.png", 120, "Test description");
+        let icon = IOSIconSize {
+            name: "test_icon.png",
+            size: 120,
+            description: "Test description",
+        };
         assert_eq!(icon.name, "test_icon.png");
         assert_eq!(icon.size, 120);
         assert_eq!(icon.description, "Test description");
@@ -147,7 +141,11 @@ mod tests {
 
     #[test]
     fn test_ios_icon_size_debug() {
-        let icon = IOSIconSize::new("test.png", 60, "Test");
+        let icon = IOSIconSize {
+            name: "test.png",
+            size: 60,
+            description: "Test",
+        };
         let debug_str = format!("{:?}", icon);
         assert!(debug_str.contains("IOSIconSize"));
         assert!(debug_str.contains("test.png"));
@@ -156,7 +154,11 @@ mod tests {
 
     #[test]
     fn test_ios_icon_size_clone() {
-        let icon1 = IOSIconSize::new("test.png", 60, "Test");
+        let icon1 = IOSIconSize {
+            name: "test",
+            size: 60,
+            description: "Test",
+        };
         let icon2 = icon1.clone();
 
         assert_eq!(icon1.name, icon2.name);

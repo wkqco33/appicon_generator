@@ -1,5 +1,5 @@
 use crate::models::{
-    ANDROID_SIZES, AndroidIconSize, IOS_SIZES, IOSIconSize, IconGenerationResult, Platform,
+    ANDROID_SIZES, AndroidIconSize, IOS_SIZES, IOSIconSize, IconGenerationResult, Platforms,
 };
 use crate::services::image_service::ImageProcessor;
 use image::ImageFormat;
@@ -8,14 +8,6 @@ use std::path::Path;
 
 /// 아이콘 생성 트레잇
 pub trait IconGenerator {
-    /// 특정 플랫폼의 아이콘들을 생성
-    fn generate_icons(
-        &self,
-        input_path: &Path,
-        output_dir: &Path,
-        platform: Platform,
-    ) -> Result<IconGenerationResult, Box<dyn std::error::Error>>;
-
     /// Android 아이콘들을 생성
     fn create_android_icons(
         &self,
@@ -99,37 +91,6 @@ impl<T: ImageProcessor> StandardIconGenerator<T> {
 }
 
 impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
-    /// 특정 플랫폼의 아이콘들을 생성
-    fn generate_icons(
-        &self,
-        input_path: &Path,
-        output_dir: &Path,
-        platform: Platform,
-    ) -> Result<IconGenerationResult, Box<dyn std::error::Error>> {
-        match platform {
-            Platform::Android => self.create_android_icons(input_path, output_dir),
-            Platform::Ios => self.create_ios_icons(input_path, output_dir),
-            Platform::All => {
-                let results = self.generate_all_icons(input_path, output_dir)?;
-                let total_icons: usize = results.iter().map(|r| r.icons_created).sum();
-                let all_success = results.iter().all(|r| r.success);
-
-                if all_success {
-                    Ok(IconGenerationResult::success(Platform::All, total_icons))
-                } else {
-                    let error_messages: Vec<String> = results
-                        .iter()
-                        .filter_map(|r| r.error_message.clone())
-                        .collect();
-                    Ok(IconGenerationResult::error(
-                        Platform::All,
-                        error_messages.join("; "),
-                    ))
-                }
-            }
-        }
-    }
-
     /// Android 아이콘들을 생성
     fn create_android_icons(
         &self,
@@ -147,7 +108,7 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
                 Ok(()) => icons_created += 1,
                 Err(e) => {
                     return Ok(IconGenerationResult::error(
-                        Platform::Android,
+                        Platforms::Android,
                         e.to_string(),
                     ));
                 }
@@ -155,7 +116,7 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
         }
 
         Ok(IconGenerationResult::success(
-            Platform::Android,
+            Platforms::Android,
             icons_created,
         ))
     }
@@ -175,11 +136,11 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
         for icon_size in IOS_SIZES {
             match self.create_ios_icon(input_path, &ios_dir, icon_size) {
                 Ok(()) => icons_created += 1,
-                Err(e) => return Ok(IconGenerationResult::error(Platform::Ios, e.to_string())),
+                Err(e) => return Ok(IconGenerationResult::error(Platforms::Ios, e.to_string())),
             }
         }
 
-        Ok(IconGenerationResult::success(Platform::Ios, icons_created))
+        Ok(IconGenerationResult::success(Platforms::Ios, icons_created))
     }
 
     /// 모든 플랫폼의 아이콘 생성
@@ -214,7 +175,7 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
             Err(e) => {
                 eprintln!("❌ Android 아이콘 생성 실패: {}", e);
                 results.push(IconGenerationResult::error(
-                    Platform::Android,
+                    Platforms::Android,
                     e.to_string(),
                 ));
             }
@@ -237,7 +198,7 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
             }
             Err(e) => {
                 eprintln!("❌ iOS 아이콘 생성 실패: {}", e);
-                results.push(IconGenerationResult::error(Platform::Ios, e.to_string()));
+                results.push(IconGenerationResult::error(Platforms::Ios, e.to_string()));
             }
         }
 
@@ -315,7 +276,7 @@ mod tests {
         assert!(result.is_ok());
         let icon_result = result.unwrap();
         assert!(icon_result.success);
-        assert_eq!(icon_result.platform, Platform::Android);
+        assert_eq!(icon_result.platform, Platforms::Android);
         assert_eq!(icon_result.icons_created, ANDROID_SIZES.len());
 
         // Android 폴더가 생성되었는지 확인
@@ -334,7 +295,7 @@ mod tests {
         assert!(result.is_ok());
         let icon_result = result.unwrap();
         assert!(icon_result.success);
-        assert_eq!(icon_result.platform, Platform::Ios);
+        assert_eq!(icon_result.platform, Platforms::Ios);
         assert_eq!(icon_result.icons_created, IOS_SIZES.len());
 
         // iOS 폴더가 생성되었는지 확인
@@ -366,51 +327,6 @@ mod tests {
         // 양쪽 폴더가 모두 생성되었는지 확인
         assert!(output_dir.join("android").exists());
         assert!(output_dir.join("ios").exists());
-    }
-
-    #[test]
-    fn test_generate_icons_android_platform() {
-        let image_processor = MockImageProcessor;
-        let generator = StandardIconGenerator::new(image_processor);
-        let (_temp_dir, input_path, output_dir) = setup_test_environment();
-
-        let result = generator.generate_icons(&input_path, &output_dir, Platform::Android);
-
-        assert!(result.is_ok());
-        let icon_result = result.unwrap();
-        assert!(icon_result.success);
-        assert_eq!(icon_result.platform, Platform::Android);
-    }
-
-    #[test]
-    fn test_generate_icons_ios_platform() {
-        let image_processor = MockImageProcessor;
-        let generator = StandardIconGenerator::new(image_processor);
-        let (_temp_dir, input_path, output_dir) = setup_test_environment();
-
-        let result = generator.generate_icons(&input_path, &output_dir, Platform::Ios);
-
-        assert!(result.is_ok());
-        let icon_result = result.unwrap();
-        assert!(icon_result.success);
-        assert_eq!(icon_result.platform, Platform::Ios);
-    }
-
-    #[test]
-    fn test_generate_icons_all_platforms() {
-        let image_processor = MockImageProcessor;
-        let generator = StandardIconGenerator::new(image_processor);
-        let (_temp_dir, input_path, output_dir) = setup_test_environment();
-
-        let result = generator.generate_icons(&input_path, &output_dir, Platform::All);
-
-        assert!(result.is_ok());
-        let icon_result = result.unwrap();
-        assert!(icon_result.success);
-        assert_eq!(icon_result.platform, Platform::All);
-
-        let expected_total = ANDROID_SIZES.len() + IOS_SIZES.len();
-        assert_eq!(icon_result.icons_created, expected_total);
     }
 
     #[test]

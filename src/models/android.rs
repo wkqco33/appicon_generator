@@ -6,12 +6,6 @@ pub struct AndroidIconSize {
     pub folder: &'static str,
 }
 
-impl AndroidIconSize {
-    pub fn new(name: &'static str, size: u32, folder: &'static str) -> Self {
-        Self { name, size, folder }
-    }
-}
-
 /// Android 플랫폼 아이콘 크기 정의
 pub const ANDROID_SIZES: &[AndroidIconSize] = &[
     AndroidIconSize {
@@ -47,7 +41,11 @@ mod tests {
 
     #[test]
     fn test_android_icon_size_creation() {
-        let icon = AndroidIconSize::new("test_icon", 48, "drawable-test");
+        let icon = AndroidIconSize {
+            name: "test_icon",
+            size: 48,
+            folder: "drawable-test",
+        };
         assert_eq!(icon.name, "test_icon");
         assert_eq!(icon.size, 48);
         assert_eq!(icon.folder, "drawable-test");
@@ -81,7 +79,11 @@ mod tests {
 
     #[test]
     fn test_android_icon_size_debug() {
-        let icon = AndroidIconSize::new("test", 48, "drawable-test");
+        let icon = AndroidIconSize {
+            name: "test",
+            size: 48,
+            folder: "drawable-test",
+        };
         let debug_str = format!("{:?}", icon);
         assert!(debug_str.contains("AndroidIconSize"));
         assert!(debug_str.contains("test"));
@@ -90,7 +92,11 @@ mod tests {
 
     #[test]
     fn test_android_icon_size_clone() {
-        let icon1 = AndroidIconSize::new("test", 48, "drawable-test");
+        let icon1 = AndroidIconSize {
+            name: "test",
+            size: 48,
+            folder: "drawable-test",
+        };
         let icon2 = icon1.clone();
 
         assert_eq!(icon1.name, icon2.name);

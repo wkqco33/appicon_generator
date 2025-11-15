@@ -7,6 +7,6 @@ pub mod models;
 pub mod services;
 
 // 편의를 위한 re-export
-pub use models::{Config, Platform, IconGenerationResult, AndroidIconSize, IOSIconSize, ANDROID_SIZES, IOS_SIZES};
+pub use models::{Config, Platforms, IconGenerationResult, AndroidIconSize, IOSIconSize, ANDROID_SIZES, IOS_SIZES};
 pub use services::{ImageService, StandardIconGenerator, ImageProcessor, IconGenerator};
 pub use cli::{CliHandler, CliInterface};
