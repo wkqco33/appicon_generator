@@ -130,6 +130,10 @@ fn test_image_validation() {
     let invalid_file = temp_dir.path().join("invalid.txt");
     std::fs::write(&invalid_file, b"not an image").expect("Failed to create test file");
     assert!(!image_service.validate_image_file(&invalid_file));
+
+    let corrupt_file = temp_dir.path().join("corrupt.png");
+    std::fs::write(&corrupt_file, b"not an image").expect("Failed to create corrupt image");
+    assert!(!image_service.validate_image_file(&corrupt_file));
 }
 
 #[test]
@@ -169,4 +173,21 @@ fn test_icon_sizes_constants() {
     assert_eq!(IOS_SIZES.len(), 15);
     assert_eq!(IOS_SIZES[0].size, 20); // 가장 작은 크기
     assert_eq!(IOS_SIZES[14].size, 1024); // App Store 크기
+}
+
+#[test]
+fn test_generation_with_invalid_input_returns_platform_results() {
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+    let input_file = temp_dir.path().join("missing.png");
+    let output_dir = temp_dir.path().join("output");
+    let generator = StandardIconGenerator::new(ImageService::new());
+
+    let results = generator
+        .generate_all_icons(&input_file, &output_dir)
+        .expect("Generation should return platform results");
+
+    assert_eq!(results.len(), 2);
+    assert!(results.iter().all(|result| !result.success));
+    assert!(results.iter().all(|result| result.icons_created == 0));
+    assert!(results.iter().all(|result| result.error_message.is_some()));
 }

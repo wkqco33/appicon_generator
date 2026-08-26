@@ -176,6 +176,16 @@ mod tests {
     }
 
     #[test]
+    fn test_validate_image_file_rejects_corrupt_image_with_supported_extension() {
+        let service = ImageService::new();
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("corrupt.png");
+        fs::write(&file_path, b"not an image").unwrap();
+
+        assert!(!service.validate_image_file(&file_path));
+    }
+
+    #[test]
     fn test_resize_image() {
         let service = ImageService::new();
         let (_temp_dir, image_path) = create_test_image();
@@ -212,6 +222,19 @@ mod tests {
             assert_eq!(resized_image.width(), *size);
             assert_eq!(resized_image.height(), *size);
         }
+    }
+
+    #[test]
+    fn test_resize_images_loads_multiple_sizes() {
+        let service = ImageService::new();
+        let (_temp_dir, image_path) = create_test_image();
+
+        let images = service.resize_images(&image_path, &[16, 32, 64]).unwrap();
+
+        assert_eq!(images.len(), 3);
+        assert_eq!((images[0].width(), images[0].height()), (16, 16));
+        assert_eq!((images[1].width(), images[1].height()), (32, 32));
+        assert_eq!((images[2].width(), images[2].height()), (64, 64));
     }
 
     #[test]

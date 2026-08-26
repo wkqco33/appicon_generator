@@ -273,6 +273,23 @@ mod tests {
     }
 
     #[test]
+    fn test_platform_generation_returns_error_result_for_invalid_input() {
+        let generator = StandardIconGenerator::new(crate::services::ImageService::new());
+        let temp_dir = TempDir::new().unwrap();
+        let input_path = temp_dir.path().join("missing.png");
+        let output_dir = temp_dir.path().join("output");
+
+        let result = generator
+            .create_android_icons(&input_path, &output_dir)
+            .unwrap();
+
+        assert!(!result.success);
+        assert_eq!(result.platform, Platforms::Android);
+        assert_eq!(result.icons_created, 0);
+        assert!(result.error_message.is_some());
+    }
+
+    #[test]
     fn test_generate_all_icons() {
         let image_processor = MockImageProcessor;
         let generator = StandardIconGenerator::new(image_processor);
