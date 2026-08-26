@@ -1,0 +1,7 @@
+{
+  "description": "Generate Android and iOS app icons from one source image",
+  "author": "wkqco33",
+  "homepage": "https://github.com/wkqco33/appicon_generator",
+  "bin_name": "appicon_generator",
+  "dependencies": {}
+}

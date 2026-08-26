@@ -1,4 +1,3 @@
-/// CLI 설정 구조체
 #[derive(Debug, Clone)]
 pub struct Config {
     pub input_path: String,
@@ -6,7 +5,6 @@ pub struct Config {
 }
 
 impl Config {
-    /// 새로운 Config 인스턴스 생성
     pub fn new(input_path: String, output_dir: String) -> Self {
         Self {
             input_path,
@@ -14,7 +12,6 @@ impl Config {
         }
     }
 
-    /// 설정 유효성 검사
     pub fn validate(&self) -> Result<(), String> {
         if self.input_path.is_empty() {
             return Err("입력 경로가 비어있습니다".to_string());
@@ -27,7 +24,6 @@ impl Config {
         Ok(())
     }
 
-    /// 설정 요약 출력
     pub fn summary(&self) -> String {
         format!("입력: {}, 출력: {}", self.input_path, self.output_dir)
     }

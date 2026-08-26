@@ -49,7 +49,7 @@ mod tests {
     #[test]
     fn test_platform_clone() {
         let platform = Platforms::Android;
-        let cloned = platform.clone();
+        let cloned = platform;
         assert_eq!(platform, cloned);
     }
 

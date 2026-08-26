@@ -1,28 +1,22 @@
-use crate::models::{
-    ANDROID_SIZES, AndroidIconSize, IOS_SIZES, IOSIconSize, IconGenerationResult, Platforms,
-};
+use crate::models::{ANDROID_SIZES, IOS_SIZES, IconGenerationResult, Platforms};
 use crate::services::image_service::ImageProcessor;
 use image::ImageFormat;
 use std::fs;
 use std::path::Path;
 
-/// 아이콘 생성 트레잇
 pub trait IconGenerator {
-    /// Android 아이콘들을 생성
     fn create_android_icons(
         &self,
         input_path: &Path,
         output_dir: &Path,
     ) -> Result<IconGenerationResult, Box<dyn std::error::Error>>;
 
-    /// iOS 아이콘들을 생성
     fn create_ios_icons(
         &self,
         input_path: &Path,
         output_dir: &Path,
     ) -> Result<IconGenerationResult, Box<dyn std::error::Error>>;
 
-    /// 모든 플랫폼의 아이콘 생성
     fn generate_all_icons(
         &self,
         input_path: &Path,
@@ -30,68 +24,18 @@ pub trait IconGenerator {
     ) -> Result<Vec<IconGenerationResult>, Box<dyn std::error::Error>>;
 }
 
-/// 표준 아이콘 생성 서비스
 #[derive(Debug)]
 pub struct StandardIconGenerator<T: ImageProcessor> {
     image_processor: T,
 }
 
 impl<T: ImageProcessor> StandardIconGenerator<T> {
-    /// 새로운 StandardIconGenerator 인스턴스 생성
     pub fn new(image_processor: T) -> Self {
         Self { image_processor }
-    }
-
-    /// 개별 Android 아이콘 생성
-    fn create_android_icon(
-        &self,
-        input_path: &Path,
-        android_dir: &Path,
-        icon_size: &AndroidIconSize,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let folder_path = android_dir.join(icon_size.folder);
-        fs::create_dir_all(&folder_path)?;
-
-        let resized_img = self
-            .image_processor
-            .resize_image(input_path, icon_size.size)?;
-        let output_path = folder_path.join(format!("{}.png", icon_size.name));
-
-        resized_img.save_with_format(&output_path, ImageFormat::Png)?;
-        println!(
-            "  ✓ {}x{} → {}",
-            icon_size.size,
-            icon_size.size,
-            output_path.display()
-        );
-
-        Ok(())
-    }
-
-    /// 개별 iOS 아이콘 생성
-    fn create_ios_icon(
-        &self,
-        input_path: &Path,
-        ios_dir: &Path,
-        icon_size: &IOSIconSize,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let resized_img = self
-            .image_processor
-            .resize_image(input_path, icon_size.size)?;
-        let output_path = ios_dir.join(icon_size.name);
-
-        resized_img.save_with_format(&output_path, ImageFormat::Png)?;
-        println!(
-            "  ✓ {}x{} → {} ({})",
-            icon_size.size, icon_size.size, icon_size.name, icon_size.description
-        );
-
-        Ok(())
     }
 }
 
 impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
-    /// Android 아이콘들을 생성
     fn create_android_icons(
         &self,
         input_path: &Path,
@@ -102,26 +46,40 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
         let android_dir = output_dir.join("android");
         fs::create_dir_all(&android_dir)?;
 
-        let mut icons_created = 0;
-        for icon_size in ANDROID_SIZES {
-            match self.create_android_icon(input_path, &android_dir, icon_size) {
-                Ok(()) => icons_created += 1,
-                Err(e) => {
-                    return Ok(IconGenerationResult::error(
-                        Platforms::Android,
-                        e.to_string(),
-                    ));
-                }
+        let sizes: Vec<_> = ANDROID_SIZES.iter().map(|icon| icon.size).collect();
+        let images = match self.image_processor.resize_images(input_path, &sizes) {
+            Ok(images) => images,
+            Err(error) => {
+                return Ok(IconGenerationResult::error(
+                    Platforms::Android,
+                    error.to_string(),
+                ));
             }
+        };
+        for (icon_size, resized_img) in ANDROID_SIZES.iter().zip(images) {
+            let folder_path = android_dir.join(icon_size.folder);
+            fs::create_dir_all(&folder_path)?;
+            let output_path = folder_path.join(format!("{}.png", icon_size.name));
+            if let Err(error) = resized_img.save_with_format(&output_path, ImageFormat::Png) {
+                return Ok(IconGenerationResult::error(
+                    Platforms::Android,
+                    error.to_string(),
+                ));
+            }
+            println!(
+                "  ✓ {}x{} → {}",
+                icon_size.size,
+                icon_size.size,
+                output_path.display()
+            );
         }
 
         Ok(IconGenerationResult::success(
             Platforms::Android,
-            icons_created,
+            ANDROID_SIZES.len(),
         ))
     }
 
-    /// iOS 아이콘들을 생성
     fn create_ios_icons(
         &self,
         input_path: &Path,
@@ -132,24 +90,41 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
         let ios_dir = output_dir.join("ios");
         fs::create_dir_all(&ios_dir)?;
 
-        let mut icons_created = 0;
-        for icon_size in IOS_SIZES {
-            match self.create_ios_icon(input_path, &ios_dir, icon_size) {
-                Ok(()) => icons_created += 1,
-                Err(e) => return Ok(IconGenerationResult::error(Platforms::Ios, e.to_string())),
+        let sizes: Vec<_> = IOS_SIZES.iter().map(|icon| icon.size).collect();
+        let images = match self.image_processor.resize_images(input_path, &sizes) {
+            Ok(images) => images,
+            Err(error) => {
+                return Ok(IconGenerationResult::error(
+                    Platforms::Ios,
+                    error.to_string(),
+                ));
             }
+        };
+        for (icon_size, resized_img) in IOS_SIZES.iter().zip(images) {
+            let output_path = ios_dir.join(icon_size.name);
+            if let Err(error) = resized_img.save_with_format(&output_path, ImageFormat::Png) {
+                return Ok(IconGenerationResult::error(
+                    Platforms::Ios,
+                    error.to_string(),
+                ));
+            }
+            println!(
+                "  ✓ {}x{} → {} ({})",
+                icon_size.size, icon_size.size, icon_size.name, icon_size.description
+            );
         }
 
-        Ok(IconGenerationResult::success(Platforms::Ios, icons_created))
+        Ok(IconGenerationResult::success(
+            Platforms::Ios,
+            IOS_SIZES.len(),
+        ))
     }
 
-    /// 모든 플랫폼의 아이콘 생성
     fn generate_all_icons(
         &self,
         input_path: &Path,
         output_dir: &Path,
     ) -> Result<Vec<IconGenerationResult>, Box<dyn std::error::Error>> {
-        // 출력 디렉토리 생성
         fs::create_dir_all(output_dir)?;
 
         println!("🚀 앱 아이콘 생성을 시작합니다...");
@@ -159,7 +134,6 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
 
         let mut results = Vec::new();
 
-        // Android 아이콘 생성
         match self.create_android_icons(input_path, output_dir) {
             Ok(result) => {
                 if result.success {
@@ -183,7 +157,6 @@ impl<T: ImageProcessor> IconGenerator for StandardIconGenerator<T> {
 
         println!();
 
-        // iOS 아이콘 생성
         match self.create_ios_icons(input_path, output_dir) {
             Ok(result) => {
                 if result.success {
@@ -229,13 +202,12 @@ mod tests {
             _input_path: &Path,
             size: u32,
         ) -> Result<DynamicImage, Box<dyn std::error::Error>> {
-            // 테스트용 더미 이미지 생성
             let img = ImageBuffer::from_fn(size, size, |_, _| Rgb([255u8, 255u8, 255u8]));
             Ok(DynamicImage::ImageRgb8(img))
         }
 
         fn validate_image_file(&self, _path: &Path) -> bool {
-            true // 테스트에서는 항상 유효하다고 가정
+            true
         }
 
         fn supported_formats(&self) -> Vec<&'static str> {
@@ -248,7 +220,6 @@ mod tests {
         let input_path = temp_dir.path().join("test_input.png");
         let output_dir = temp_dir.path().join("output");
 
-        // 더미 입력 파일 생성
         fs::write(&input_path, b"dummy image content").unwrap();
         fs::create_dir_all(&output_dir).unwrap();
 
@@ -260,7 +231,6 @@ mod tests {
         let image_processor = MockImageProcessor;
         let generator = StandardIconGenerator::new(image_processor);
 
-        // 생성이 성공하는지 확인
         let debug_str = format!("{:?}", generator);
         assert!(debug_str.contains("StandardIconGenerator"));
     }
@@ -279,7 +249,6 @@ mod tests {
         assert_eq!(icon_result.platform, Platforms::Android);
         assert_eq!(icon_result.icons_created, ANDROID_SIZES.len());
 
-        // Android 폴더가 생성되었는지 확인
         let android_dir = output_dir.join("android");
         assert!(android_dir.exists());
     }
@@ -337,7 +306,6 @@ mod tests {
 
         let _ = generator.create_android_icons(&input_path, &output_dir);
 
-        // 각 DPI 폴더가 생성되었는지 확인
         let android_dir = output_dir.join("android");
         for icon_size in ANDROID_SIZES {
             let folder_path = android_dir.join(icon_size.folder);
@@ -364,7 +332,6 @@ mod tests {
 
         let _ = generator.create_ios_icons(&input_path, &output_dir);
 
-        // 각 iOS 아이콘 파일이 생성되었는지 확인
         let ios_dir = output_dir.join("ios");
         for icon_size in IOS_SIZES {
             let icon_file = ios_dir.join(icon_size.name);
