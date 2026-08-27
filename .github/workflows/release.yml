@@ -27,7 +27,7 @@ jobs:
             archive: zip
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -49,7 +49,7 @@ jobs:
           Copy-Item target/${{ matrix.target }}/release/appicon_generator.exe dist/
           Compress-Archive -Path dist/appicon_generator.exe -DestinationPath appicon_generator_${{ matrix.suffix }}.zip
           (Get-FileHash appicon_generator_${{ matrix.suffix }}.zip -Algorithm SHA256).Hash.ToLower() + "  appicon_generator_${{ matrix.suffix }}.zip" | Out-File -Encoding ascii appicon_generator_${{ matrix.suffix }}.zip.sha256
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: appicon_generator_${{ matrix.suffix }}
           path: |
@@ -60,11 +60,11 @@ jobs:
     needs: binaries
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: release-assets
           pattern: appicon_generator_*
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: release-assets/*
