@@ -17,15 +17,29 @@
 cargo install --git https://github.com/wkqco33/appicon_generator appicon_generator
 ```
 
+설치 후 실행 파일 이름은 `appicon_generator`입니다.
+
 ### PPM
 
-GitHub Release가 게시되면 PPM이 OS와 아키텍처에 맞는 사전 빌드 바이너리를 설치합니다.
+PPM은 GitHub Release의 OS와 아키텍처에 맞는 사전 빌드 바이너리를 설치합니다.
 
 ```bash
 ppm install wkqco33/appicon_generator
 ```
 
-릴리스 자산은 `appicon_generator_{os}_{arch}.tar.gz` 또는 Windows용 `.zip`이며, 각 자산에 SHA-256 체크섬 파일이 함께 제공됩니다.
+PPM 설치 후 실행 파일 이름은 `icgen`입니다.
+
+### 사전 빌드 바이너리
+
+최신 바이너리는 [GitHub Releases](https://github.com/wkqco33/appicon_generator/releases)에서 다운로드할 수 있습니다.
+
+현재 Release는 다음 플랫폼을 제공합니다.
+
+- Linux x86_64: `appicon_generator_linux_amd64.tar.gz`
+- macOS ARM64: `appicon_generator_darwin_arm64.tar.gz`
+- Windows x86_64: `appicon_generator_windows_amd64.zip`
+
+각 릴리스 자산에는 SHA-256 체크섬 파일이 함께 제공됩니다.
 
 ## 사용법
 
@@ -33,6 +47,12 @@ ppm install wkqco33/appicon_generator
 appicon_generator --input logo.png --output ./app_icons
 appicon_generator --input logo.png
 appicon_generator --help
+```
+
+PPM으로 설치한 경우에는 `appicon_generator` 대신 `icgen`을 사용합니다.
+
+```bash
+icgen --input logo.png --output ./app_icons
 ```
 
 입력은 PNG, JPEG, GIF, BMP, TIFF, WEBP를 지원합니다. 출력 디렉토리의 구조는 다음과 같습니다.
